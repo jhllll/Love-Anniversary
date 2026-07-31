@@ -1,0 +1,396 @@
+# 哄老婆开心 - 部署运维手册
+
+## 文档信息
+
+| 项目 | 内容 |
+|------|------|
+| 项目名称 | love-app |
+| 文档类型 | 部署运维手册 |
+| 版本号 | v1.0.0 |
+| 创建日期 | 2026-07-31 |
+| 目标读者 | 开发者 / 运维人员（丈夫） |
+
+---
+
+## 1. 部署架构
+
+```
+┌──────────┐    git push    ┌─────────────┐    HTTPS     ┌──────────┐
+│  本地开发  │ ──────────────► │ GitHub Pages │ ◄─────────── │ 妻子手机  │
+│  npm run  │   gh-pages 分支 │ 静态文件托管  │   微信链接    │ Safari/  │
+│  build    │                │ 免费 + CDN   │              │ 微信     │
+└──────────┘                └─────────────┘              └──────────┘
+```
+
+| 组件 | 说明 |
+|------|------|
+| 源文件 | GitHub 仓库 `main` 分支 |
+| 构建产物 | `dist/` 目录，推送到 `gh-pages` 分支 |
+| 托管 | GitHub Pages，自动 HTTPS，全球 CDN |
+| 域名 | `https://<username>.github.io/<repo>/` |
+| 成本 | 完全免费，无限流量 |
+
+---
+
+## 2. 首次部署
+
+### 2.1 前提条件
+
+- [ ] GitHub 账号
+- [ ] Git 已安装
+- [ ] Node.js ≥ 18 已安装
+- [ ] 项目代码已就绪（`love-app/` 目录完整）
+
+### 2.2 创建 GitHub 仓库
+
+```bash
+# 方式一：在 GitHub 网页上创建仓库
+# 1. 访问 https://github.com/new
+# 2. Repository name: love-app（或自定义名称）
+# 3. 选择 Public（GitHub Pages 免费版需要 Public）
+# 4. 不要勾选 Initialize this repository
+# 5. 点击 Create repository
+
+# 方式二：使用 gh CLI
+gh repo create love-app --public --source=. --remote=origin --push
+```
+
+### 2.3 初始化本地 Git 并推送
+
+```bash
+cd love-app
+
+# 初始化 git
+git init
+git add .
+git commit -m "feat: 初始版本 - 纪念日倒计时 + 每日情话"
+
+# 关联远程仓库
+git remote add origin https://github.com/<你的用户名>/love-app.git
+
+# 推送到 main 分支
+git branch -M main
+git push -u origin main
+```
+
+### 2.4 构建并部署到 gh-pages
+
+```bash
+# 构建
+npm run build
+
+# 推送 dist 目录到 gh-pages 分支
+# 方式一：使用 git subtree（推荐）
+git add dist -f
+git commit -m "deploy: GitHub Pages"
+git subtree push --prefix dist origin gh-pages
+
+# 方式二：手动推送
+# cd dist
+# git init
+# git add .
+# git commit -m "deploy"
+# git push -f https://github.com/<用户名>/love-app.git master:gh-pages
+# cd ..
+```
+
+### 2.5 配置 GitHub Pages
+
+1. 进入仓库 → **Settings** → **Pages**
+2. **Source**: `Deploy from a branch`
+3. **Branch**: `gh-pages` → `/(root)` → Save
+
+```
+Settings → Pages:
+┌──────────────────────────────────┐
+│ Build and deployment             │
+│                                  │
+│ Source: [Deploy from a branch ▼] │
+│ Branch: [gh-pages ▼] [/(root) ▼] │
+│                                  │
+│         [ Save ]                 │
+└──────────────────────────────────┘
+```
+
+4. 等待 1-2 分钟，页面顶部会显示部署 URL：
+
+```
+✓ Your site is live at https://<用户名>.github.io/love-app/
+```
+
+### 2.6 验证部署
+
+```bash
+# 用 curl 验证（需安装 curl）
+curl -I https://<用户名>.github.io/love-app/
+
+# 预期返回 200 OK
+```
+
+用手机浏览器打开 URL，确认：
+- [ ] 页面正常加载，粉色背景可见
+- [ ] 首次进入弹出纪念日设置
+- [ ] 设置后数据正常展示
+- [ ] 情话页切换正常
+
+---
+
+## 3. 自动化部署（GitHub Actions）
+
+### 3.1 工作流配置
+
+创建 `.github/workflows/deploy.yml`：
+
+```yaml
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+```
+
+### 3.2 设置 Pages 来源
+
+在 Settings → Pages 中将 Source 改为 **GitHub Actions**：
+
+```
+Source: [GitHub Actions ▼]
+```
+
+配置完成后，每次 push 到 `main` 分支，GitHub Actions 会自动构建并部署。
+
+---
+
+## 4. 自定义域名
+
+### 4.1 域名配置
+
+如果有自己的域名（如 `love.example.com`）：
+
+**Step 1：在 GitHub Pages 设置中配置**
+
+```
+Settings → Pages → Custom domain:
+[love.example.com        ] [ Save ]
+```
+
+**Step 2：DNS 配置**
+
+在域名 DNS 服务商处添加记录：
+
+| 类型 | 主机记录 | 记录值 |
+|------|----------|--------|
+| CNAME | `love` | `<用户名>.github.io` |
+
+或使用 Apex 域名（如 `example.com`）：
+
+| 类型 | 主机记录 | 记录值 |
+|------|----------|--------|
+| A | `@` | `185.199.108.153` |
+| A | `@` | `185.199.109.153` |
+| A | `@` | `185.199.110.153` |
+| A | `@` | `185.199.111.153` |
+
+> GitHub Pages IP 地址可能会变化，详见 [GitHub Docs](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site)
+
+**Step 3：等待生效**
+
+DNS 解析生效需要几分钟到 48 小时不等。
+
+**Step 4：HTTPS**
+
+GitHub Pages 会自动为自定义域名签发 Let's Encrypt SSL 证书。在 Pages 设置中勾选 **Enforce HTTPS**。
+
+---
+
+## 5. 更新流程
+
+### 5.1 日常更新
+
+```bash
+# 1. 修改代码
+# 2. 本地验证
+npm run dev
+# 浏览器中检查修改效果
+
+# 3. 构建验证
+npm run build
+
+# 4. 提交代码
+git add .
+git commit -m "feat: 功能描述"
+
+# 5. 推送
+git push origin main
+
+# 如果配置了 GitHub Actions，自动部署
+# 如果手动部署：
+git subtree push --prefix dist origin gh-pages
+```
+
+### 5.2 回滚
+
+```bash
+# 回滚 main 分支
+git revert <要回滚的commit-hash>
+git push origin main
+
+# 手动重新部署
+npm run build
+git subtree push --prefix dist origin gh-pages
+```
+
+---
+
+## 6. 日常运维
+
+### 6.1 检查清单（每月）
+
+| 项目 | 操作 |
+|------|------|
+| GitHub Pages 状态 | 访问 Settings → Pages，确认无报错 |
+| HTTPS 证书 | 确认 Enforce HTTPS 已勾选 |
+| 链接可访问 | 手机浏览器/微信中打开确认 |
+| 依赖安全 | `npm audit` 检查漏洞 |
+
+### 6.2 监控
+
+由于是纯静态站点，无需服务器监控。以下为可选项：
+
+| 监控项 | 方式 |
+|--------|------|
+| 站点可用性 | GitHub Actions 定时 curl 检查 |
+| 用户体验 | 让老婆反馈 😄 |
+
+### 6.3 备份
+
+```bash
+# 代码已在 GitHub，本身即是备份
+# 如需额外备份：
+git clone https://github.com/<用户名>/love-app.git ~/backup/love-app-$(date +%Y%m%d)
+```
+
+---
+
+## 7. 故障排查
+
+### 7.1 页面白屏 / 404
+
+| 可能原因 | 解决方法 |
+|----------|----------|
+| gh-pages 分支未推送 | 执行 `git subtree push --prefix dist origin gh-pages` |
+| Pages 设置错误 | Settings → Pages → 确认 Source 指向 gh-pages |
+| 资源 404 | 检查 `vite.config.js` 中 `base: './'` 是否有效 |
+| Hash 路由失效 | 确认 `createWebHashHistory()` 而非 `createWebHistory()` |
+
+### 7.2 样式不生效 / 错乱
+
+| 可能原因 | 解决方法 |
+|----------|----------|
+| CSS 缓存 | 强制刷新（Ctrl+Shift+R 或 Safari 长按刷新） |
+| `backdrop-filter` 不显示 | 部分旧设备不支持，属于降级行为 |
+| 微信缓存 | 微信 → 我 → 设置 → 通用 → 存储空间 → 清理缓存 |
+
+### 7.3 微信中打不开
+
+| 可能原因 | 解决方法 |
+|----------|----------|
+| 链接被拦截 | 确认仓库为 Public，GitHub Pages 需要 Public 仓库 |
+| 微信安全策略 | 用 Safari 打开确认正常 → 微信中重新尝试 |
+| 网络问题 | 切换 WiFi/4G 尝试 |
+
+### 7.4 localStorage 数据异常
+
+```js
+// 妻子手机浏览器控制台中执行（如果她会的话）：
+localStorage.removeItem('love-app-anniversary');
+localStorage.removeItem('love-app-favorites');
+// 然后刷新页面，重新设置纪念日
+```
+
+---
+
+## 8. 目录结构（运维视角）
+
+```
+love-app/
+├── .github/
+│   └── workflows/
+│       └── deploy.yml          ← GitHub Actions 自动部署
+├── src/                         ← 源代码
+├── dist/                        ← 构建产物（部署到 gh-pages）
+├── docs/                        ← 项目文档
+│   ├── requirements.md
+│   ├── development.md
+│   ├── design-system.md
+│   ├── testing.md
+│   ├── user-guide.md
+│   └── deployment.md
+├── package.json
+├── vite.config.js
+└── index.html
+```
+
+---
+
+## 9. 环境变量参考
+
+本项目无需环境变量，所有配置在以下文件中：
+
+| 配置项 | 文件 | 说明 |
+|--------|------|------|
+| `base: './'` | `vite.config.js` | 相对路径，Pages 必须 |
+| `host: '0.0.0.0'` | `vite.config.js` | 允许局域网手机测试 |
+| `port: 5173` | `vite.config.js` | 开发服务器端口 |
+| 路由 Hash 模式 | `src/router/index.js` | Pages 兼容 |
+
+---
+
+## 10. 性能优化参考
+
+| 项 | 当前值 | 说明 |
+|-----|--------|------|
+| 总构建大小 | ~118 KB | gzip 后 ~46 KB |
+| 首屏 JS | 108 KB | 含 Vue + Vue Router + 所有组件 |
+| CSS | 8.8 KB | 全局 + scoped styles |
+| HTML | 0.72 KB | 极简入口 |
+| HTTP 请求 | 3 个 | 1 HTML + 1 CSS + 1 JS |
+| Lighthouse 预估 | 95+ | 纯静态，无外部请求 |
+
+> 如需进一步优化，可考虑 Vue 异步组件拆分情话页，但当前 46KB gzip 已经非常轻量，不建议过度优化。
+
+---
+
+## 11. 变更记录
+
+| 版本 | 日期 | 变更内容 |
+|------|------|----------|
+| v1.0.0 | 2026-07-31 | 初始版本，完整部署流程 |
