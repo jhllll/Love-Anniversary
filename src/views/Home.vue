@@ -40,6 +40,10 @@
           <span class="nav-icon">💌</span>
           <span class="nav-label">每日情话</span>
         </router-link>
+        <router-link to="/games" class="nav-item">
+          <span class="nav-icon">🎮</span>
+          <span class="nav-label">小游戏</span>
+        </router-link>
       </nav>
     </div>
 
