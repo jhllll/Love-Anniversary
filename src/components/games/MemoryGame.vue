@@ -1,25 +1,53 @@
 <template>
   <div class="memory-game">
+    <!-- 开始遮罩 -->
+    <div v-if="!started" class="start-overlay glass-card">
+      <p class="start-emoji">🃏</p>
+      <p class="start-title">翻牌记忆</p>
+      <p class="start-desc">记住每张卡片的位置，找出所有配对</p>
+      <button class="btn" @click="startGame">开始游戏</button>
+    </div>
+
+    <!-- 预览倒计时 -->
+    <div v-if="previewing" class="preview-overlay">
+      <span class="preview-count" :key="previewCount">{{ previewCount }}</span>
+    </div>
+
     <div class="game-header">
       <span class="moves">👣 {{ moves }} 步</span>
       <span class="pairs">✅ {{ matched }}/8 对</span>
     </div>
+
     <div class="board">
       <button
         v-for="(card, idx) in cards"
         :key="idx"
         class="card glass-card"
-        :class="{ flipped: card.flipped, matched: card.matched }"
-        :disabled="card.flipped || card.matched || lockBoard"
+        :class="{
+          flipped: card.flipped,
+          matched: card.matched,
+          preview: previewing
+        }"
+        :disabled="card.flipped || card.matched || lockBoard || previewing"
         @click="flipCard(idx)"
       >
-        <span class="card-face card-back">❓</span>
-        <span class="card-face card-front">{{ card.emoji }}</span>
+        <img
+          v-show="card.flipped || card.matched || previewing"
+          class="card-front"
+          :src="card.image"
+          :alt="'卡牌'"
+        />
+        <span
+          v-show="!card.flipped && !card.matched && !previewing"
+          class="card-back"
+        >❓</span>
       </button>
     </div>
+
     <div class="game-footer">
       <button class="btn" @click="resetGame">重新开始</button>
     </div>
+
     <div v-if="showCelebrate" class="celebrate glass-card">
       <p class="celebrate-emoji">🎉💖🎉</p>
       <p>太棒了！全部配对成功！</p>
@@ -32,7 +60,16 @@
 import { ref } from 'vue'
 import { quotes } from '../../data/quotes.js'
 
-const emojiList = ['💖', '💕', '💗', '💝', '💘', '💓', '🌸', '✨']
+const cardImages = [
+  '/images/memory/card-01.svg',
+  '/images/memory/card-02.svg',
+  '/images/memory/card-03.svg',
+  '/images/memory/card-04.svg',
+  '/images/memory/card-05.svg',
+  '/images/memory/card-06.svg',
+  '/images/memory/card-07.svg',
+  '/images/memory/card-08.svg'
+]
 
 const cards = ref([])
 const moves = ref(0)
@@ -40,8 +77,12 @@ const matched = ref(0)
 const lockBoard = ref(false)
 const showCelebrate = ref(false)
 const celebrateQuote = ref('')
+const started = ref(false)
+const previewing = ref(false)
+const previewCount = ref(3)
 let firstCard = null
 let secondCard = null
+let previewTimer = null
 
 function shuffle(arr) {
   const a = [...arr]
@@ -53,13 +94,29 @@ function shuffle(arr) {
 }
 
 function initCards() {
-  const pairs = [...emojiList, ...emojiList]
+  const pairs = [...cardImages, ...cardImages]
   const shuffled = shuffle(pairs)
-  cards.value = shuffled.map(e => ({
-    emoji: e,
+  cards.value = shuffled.map(img => ({
+    image: img,
     flipped: false,
     matched: false
   }))
+}
+
+function beginPreview() {
+  previewing.value = true
+  previewCount.value = 3
+  lockBoard.value = true
+
+  previewTimer = setInterval(() => {
+    previewCount.value--
+    if (previewCount.value <= 0) {
+      clearInterval(previewTimer)
+      previewTimer = null
+      previewing.value = false
+      lockBoard.value = false
+    }
+  }, 1000)
 }
 
 function flipCard(idx) {
@@ -77,7 +134,7 @@ function flipCard(idx) {
   moves.value++
   lockBoard.value = true
 
-  if (firstCard.card.emoji === secondCard.card.emoji) {
+  if (firstCard.card.image === secondCard.card.image) {
     firstCard.card.matched = true
     secondCard.card.matched = true
     matched.value++
@@ -101,6 +158,9 @@ function flipCard(idx) {
 }
 
 function resetGame() {
+  clearInterval(previewTimer)
+  previewTimer = null
+  previewing.value = false
   moves.value = 0
   matched.value = 0
   firstCard = null
@@ -108,9 +168,20 @@ function resetGame() {
   lockBoard.value = false
   showCelebrate.value = false
   initCards()
+  beginPreview()
 }
 
-initCards()
+function startGame() {
+  started.value = true
+  moves.value = 0
+  matched.value = 0
+  firstCard = null
+  secondCard = null
+  lockBoard.value = false
+  showCelebrate.value = false
+  initCards()
+  beginPreview()
+}
 </script>
 
 <style scoped>
@@ -138,8 +209,41 @@ initCards()
   width: 100%;
   max-width: 320px;
   margin: 8px 0;
+  position: relative;
 }
 
+/* 预览倒计时 */
+.preview-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 60;
+  pointer-events: none;
+}
+
+.preview-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--pink), var(--pink-deep));
+  color: var(--white);
+  font-size: 32px;
+  font-weight: 700;
+  box-shadow: 0 4px 20px rgba(232,114,138,0.5);
+  animation: count-pop 0.8s ease-out;
+}
+
+@keyframes count-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* 卡片 */
 .card {
   aspect-ratio: 1;
   position: relative;
@@ -150,18 +254,13 @@ initCards()
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.4s;
+  transition: transform 0.3s;
   -webkit-tap-highlight-color: transparent;
-  transform-style: preserve-3d;
+  overflow: hidden;
 }
 
-.card:not(.flipped):not(.matched):active {
+.card:not(.flipped):not(.matched):not(.preview):active {
   transform: scale(0.93);
-}
-
-.card.flipped,
-.card.matched {
-  transform: rotateY(180deg);
 }
 
 .card.matched {
@@ -169,17 +268,25 @@ initCards()
   border-color: rgba(255,154,158,0.5);
 }
 
-.card-face {
-  position: absolute;
-  backface-visibility: hidden;
+.card.matched .card-front {
+  opacity: 0.5;
 }
 
 .card-back {
-  /* visible by default */
+  font-size: 32px;
 }
 
 .card-front {
-  transform: rotateY(180deg);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 16px;
+  animation: flip-in 0.3s ease;
+}
+
+@keyframes flip-in {
+  from { opacity: 0; transform: scale(0.5) rotateY(90deg); }
+  to { opacity: 1; transform: scale(1) rotateY(0deg); }
 }
 
 .game-footer {
@@ -212,5 +319,34 @@ initCards()
 @keyframes toast-in {
   from { opacity: 0; transform: scale(0.8); }
   to { opacity: 1; transform: scale(1); }
+}
+
+.start-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 50;
+  text-align: center;
+  padding: 24px;
+}
+
+.start-emoji {
+  font-size: 48px;
+}
+
+.start-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--pink-deep);
+}
+
+.start-desc {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 8px;
 }
 </style>

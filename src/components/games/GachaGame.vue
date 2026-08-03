@@ -1,9 +1,17 @@
 <template>
   <div class="gacha-game">
+    <!-- 开始遮罩 -->
+    <div v-if="!started" class="start-overlay glass-card">
+      <p class="start-emoji">🥚</p>
+      <p class="start-title">扭蛋机</p>
+      <p class="start-desc">扭一扭，随机获得情话或恋爱任务</p>
+      <button class="btn" @click="started = true">开始游戏</button>
+    </div>
+
     <div class="machine">
       <div class="machine-body glass-card" :class="{ shaking: isShaking }">
         <div class="machine-top">
-          <span class="machine-knob">🔘</span>
+          <span class="machine-knob"><img src="/images/gacha/knob.svg" class="knob-img" /></span>
         </div>
         <div class="machine-glass">
           <div class="capsules">
@@ -13,12 +21,12 @@
               class="capsule"
               :style="{ animationDelay: n * 0.15 + 's', left: (10 + (n-1)*10) + '%' }"
               :class="{ drop: isDropping && n === dropIndex }"
-            >🥚</span>
+            ><img src="/images/gacha/capsule.svg" class="capsule-img" /></span>
           </div>
         </div>
         <div class="machine-outlet">
           <span v-if="result" class="result-item">{{ result }}</span>
-          <span v-else class="outlet-empty">⬜</span>
+          <span v-else class="outlet-empty"><img src="/images/gacha/outlet.svg" class="outlet-img" /></span>
         </div>
       </div>
     </div>
@@ -53,6 +61,7 @@ const showResult = ref(false)
 const resultText = ref('')
 const isTask = ref(false)
 const history = ref([])
+const started = ref(false)
 
 function gacha() {
   if (isShaking.value) return
@@ -126,6 +135,12 @@ function gacha() {
   border-bottom: 1px solid var(--white-30);
 }
 
+.knob-img {
+  width: 36px;
+  height: 36px;
+  vertical-align: middle;
+}
+
 .machine-glass {
   height: 120px;
   position: relative;
@@ -142,8 +157,15 @@ function gacha() {
 .capsule {
   position: absolute;
   bottom: 8px;
-  font-size: 18px;
+  width: 22px;
+  height: 28px;
   animation: float-capsule 2s ease-in-out infinite;
+}
+
+.capsule-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .capsule.drop {
@@ -173,7 +195,11 @@ function gacha() {
 
 .outlet-empty {
   opacity: 0.3;
-  font-size: 24px;
+}
+
+.outlet-img {
+  width: 32px;
+  height: 28px;
 }
 
 .gacha-btn {
@@ -239,5 +265,34 @@ function gacha() {
 @keyframes toast-in {
   from { opacity: 0; transform: scale(0.8); }
   to { opacity: 1; transform: scale(1); }
+}
+
+.start-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 50;
+  text-align: center;
+  padding: 24px;
+}
+
+.start-emoji {
+  font-size: 48px;
+}
+
+.start-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--pink-deep);
+}
+
+.start-desc {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 8px;
 }
 </style>

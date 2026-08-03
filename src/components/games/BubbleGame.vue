@@ -1,5 +1,13 @@
 <template>
   <div class="bubble-game">
+    <!-- 开始遮罩 -->
+    <div v-if="!started" class="start-overlay glass-card">
+      <p class="start-emoji">🫧</p>
+      <p class="start-title">戳泡泡</p>
+      <p class="start-desc">戳破爱心泡泡，每10分弹出情话</p>
+      <button class="btn" @click="startGame">开始游戏</button>
+    </div>
+
     <div class="game-header">
       <span class="score">💖 {{ score }} 分</span>
     </div>
@@ -12,12 +20,11 @@
             bottom: bubble.y + 'px',
             width: bubble.size + 'px',
             height: bubble.size + 'px',
-            fontSize: bubble.size * 0.6 + 'px',
             opacity: bubble.opacity
           }"
           @click.stop="popBubble(bubble)"
         >
-          <span v-if="!bubble.popping">{{ bubble.emoji }}</span>
+          <img v-if="!bubble.popping" :src="bubble.image" class="bubble-img" />
           <span v-else class="pop-particles">
             <i v-for="n in 6" :key="n" class="particle" :style="particleStyle(n)">💕</i>
           </span>
@@ -42,13 +49,23 @@ const bubbles = ref([])
 const gameArea = ref(null)
 const showToast = ref(false)
 const toastMsg = ref('')
+const started = ref(false)
 let bubbleId = 0
 let spawnTimer = null
 let moveTimer = null
 let areaWidth = 300
 let areaHeight = 400
 
-const emojis = ['💖', '💕', '💗', '💝', '💘', '💓', '🫧', '🌸', '✨', '💎']
+const bubbleImages = [
+  '/images/bubble/bubble-01.svg',
+  '/images/bubble/bubble-02.svg',
+  '/images/bubble/bubble-03.svg',
+  '/images/bubble/bubble-04.svg',
+  '/images/bubble/bubble-05.svg',
+  '/images/bubble/bubble-06.svg',
+  '/images/bubble/bubble-07.svg',
+  '/images/bubble/bubble-08.svg'
+]
 
 function particleStyle(n) {
   const angle = (n / 6) * 360
@@ -66,7 +83,7 @@ function spawnBubble() {
     x: Math.random() * (areaWidth - size),
     y: -size,
     size,
-    emoji: emojis[Math.floor(Math.random() * emojis.length)],
+    image: bubbleImages[Math.floor(Math.random() * bubbleImages.length)],
     opacity: 0.6 + Math.random() * 0.4,
     speed: 0.5 + Math.random() * 1.2,
     popping: false
@@ -109,12 +126,19 @@ function resize() {
   }
 }
 
+function startGame() {
+  started.value = true
+  score.value = 0
+  bubbles.value = []
+  resize()
+  spawnTimer = setInterval(spawnBubble, 800)
+  moveTimer = setInterval(updateBubbles, 16)
+}
+
 onMounted(async () => {
   await nextTick()
   resize()
   window.addEventListener('resize', resize)
-  spawnTimer = setInterval(spawnBubble, 800)
-  moveTimer = setInterval(updateBubbles, 16)
 })
 
 onUnmounted(() => {
@@ -174,6 +198,13 @@ onUnmounted(() => {
   transform: scale(0.85);
 }
 
+.bubble-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
 .pop-particles {
   position: relative;
   width: 100%;
@@ -227,5 +258,34 @@ onUnmounted(() => {
 @keyframes toast-in {
   from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
   to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+.start-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 50;
+  text-align: center;
+  padding: 24px;
+}
+
+.start-emoji {
+  font-size: 48px;
+}
+
+.start-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--pink-deep);
+}
+
+.start-desc {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 8px;
 }
 </style>

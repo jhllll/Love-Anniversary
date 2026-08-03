@@ -1,8 +1,17 @@
 <template>
   <div class="catch-game">
+    <!-- 开始遮罩 -->
+    <div v-if="!started" class="start-overlay glass-card">
+      <p class="start-emoji">🧺</p>
+      <p class="start-title">接爱心</p>
+      <p class="start-desc">移动篮子接住下落的爱心，有5条命</p>
+      <button class="btn" @click="beginGame">开始游戏</button>
+    </div>
+
     <div class="game-header">
       <span class="lives">❤️ x {{ lives }}</span>
       <span class="score">💖 {{ score }} 分</span>
+      <span class="speed">⚡ Lv.{{ level }}</span>
     </div>
     <div
       class="game-area"
@@ -14,9 +23,9 @@
       <template v-for="heart in hearts" :key="heart.id">
         <div
           class="heart"
-          :style="{ left: heart.x + 'px', top: heart.y + 'px', fontSize: heart.size + 'px' }"
+          :style="{ left: heart.x + 'px', top: heart.y + 'px', width: heart.size + 'px', height: heart.size + 'px' }"
         >
-          {{ heart.emoji }}
+        <img :src="heart.image" class="heart-img" />
         </div>
       </template>
       <div
@@ -29,7 +38,7 @@
     <div class="game-footer">
       <p v-if="playing" class="hint">移动篮子接住爱心！</p>
     </div>
-    <div v-if="!playing" class="game-over glass-card">
+    <div v-if="!playing && started" class="game-over glass-card">
       <p class="go-emoji">{{ lives <= 0 ? '😢' : '🎉' }}</p>
       <p>{{ lives <= 0 ? '游戏结束' : '' }}</p>
       <p class="go-score">最终得分：{{ score }} 分</p>
@@ -45,7 +54,9 @@ const lives = ref(5)
 const score = ref(0)
 const hearts = ref([])
 const basketX = ref(130)
-const playing = ref(true)
+const playing = ref(false)
+const started = ref(false)
+const level = ref(1)
 const gameArea = ref(null)
 let areaWidth = 300
 let areaHeight = 400
@@ -53,19 +64,47 @@ let heartId = 0
 let spawnTimer = null
 let fallTimer = null
 
-const heartEmojis = ['💖', '💕', '💗', '💝', '💘', '💓', '❤️', '🩷']
+const heartImages = [
+  '/images/heart/heart-01.svg',
+  '/images/heart/heart-02.svg',
+  '/images/heart/heart-03.svg',
+  '/images/heart/heart-04.svg',
+  '/images/heart/heart-05.svg',
+  '/images/heart/heart-06.svg',
+  '/images/heart/heart-07.svg',
+  '/images/heart/heart-08.svg'
+]
+
+function getLevel() {
+  return Math.floor(score.value / 5) + 1
+}
+
+function getSpawnInterval() {
+  return Math.max(450, 1100 - (getLevel() - 1) * 100)
+}
+
+function getSpeedMul() {
+  return 0.8 + (getLevel() - 1) * 0.2
+}
 
 function spawnHeart() {
   const size = 22 + Math.random() * 16
+  const mul = getSpeedMul()
   heartId++
   hearts.value.push({
     id: heartId,
     x: Math.random() * (areaWidth - size),
     y: -size,
     size,
-    emoji: heartEmojis[Math.floor(Math.random() * heartEmojis.length)],
-    speed: 1.5 + Math.random() * 2.5
+    image: heartImages[Math.floor(Math.random() * heartImages.length)],
+    speed: (1.0 + Math.random() * 2.0) * mul
   })
+  level.value = getLevel()
+  scheduleSpawn()
+}
+
+function scheduleSpawn() {
+  spawnTimer = setTimeout(spawnHeart, getSpawnInterval())
 }
 
 function updateHearts() {
@@ -107,7 +146,7 @@ function updateHearts() {
 
 function stopGame() {
   playing.value = false
-  clearInterval(spawnTimer)
+  clearTimeout(spawnTimer)
   clearInterval(fallTimer)
 }
 
@@ -123,10 +162,16 @@ function startGame() {
   lives.value = 5
   score.value = 0
   hearts.value = []
+  level.value = 1
   playing.value = true
   basketX.value = areaWidth / 2 - 30
-  spawnTimer = setInterval(spawnHeart, 900)
+  scheduleSpawn()
   fallTimer = setInterval(updateHearts, 16)
+}
+
+function beginGame() {
+  started.value = true
+  startGame()
 }
 
 function resize() {
@@ -140,11 +185,10 @@ onMounted(async () => {
   await nextTick()
   resize()
   window.addEventListener('resize', resize)
-  startGame()
 })
 
 onUnmounted(() => {
-  clearInterval(spawnTimer)
+  clearTimeout(spawnTimer)
   clearInterval(fallTimer)
   window.removeEventListener('resize', resize)
 })
@@ -161,9 +205,9 @@ onUnmounted(() => {
 
 .game-header {
   display: flex;
-  gap: 24px;
+  gap: 16px;
   padding: 8px 0;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--white);
   text-shadow: 0 1px 4px rgba(0,0,0,0.15);
@@ -187,6 +231,12 @@ onUnmounted(() => {
   pointer-events: none;
   filter: drop-shadow(0 2px 6px rgba(255,100,120,0.5));
   transition: none;
+}
+
+.heart-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .basket {
@@ -235,5 +285,34 @@ onUnmounted(() => {
 @keyframes toast-in {
   from { opacity: 0; transform: scale(0.8); }
   to { opacity: 1; transform: scale(1); }
+}
+
+.start-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  z-index: 50;
+  text-align: center;
+  padding: 24px;
+}
+
+.start-emoji {
+  font-size: 48px;
+}
+
+.start-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--pink-deep);
+}
+
+.start-desc {
+  font-size: 13px;
+  color: var(--text-light);
+  margin-bottom: 8px;
 }
 </style>
