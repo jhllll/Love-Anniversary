@@ -11,7 +11,7 @@
     <div class="machine">
       <div class="machine-body glass-card" :class="{ shaking: isShaking }">
         <div class="machine-top">
-          <span class="machine-knob"><img src="/images/gacha/knob.svg" class="knob-img" /></span>
+          <span class="machine-knob"><img :src="baseUrl + 'images/gacha/knob.svg'" class="knob-img" /></span>
         </div>
         <div class="machine-glass">
           <div class="capsules">
@@ -21,12 +21,12 @@
               class="capsule"
               :style="{ animationDelay: n * 0.15 + 's', left: (10 + (n-1)*10) + '%' }"
               :class="{ drop: isDropping && n === dropIndex }"
-            ><img src="/images/gacha/capsule.svg" class="capsule-img" /></span>
+            ><img :src="baseUrl + 'images/gacha/capsule.svg'" class="capsule-img" /></span>
           </div>
         </div>
         <div class="machine-outlet">
           <span v-if="result" class="result-item">{{ result }}</span>
-          <span v-else class="outlet-empty"><img src="/images/gacha/outlet.svg" class="outlet-img" /></span>
+          <span v-else class="outlet-empty"><img :src="baseUrl + 'images/gacha/outlet.svg'" class="outlet-img" /></span>
         </div>
       </div>
     </div>
@@ -52,6 +52,8 @@
 import { ref } from 'vue'
 import { quotes } from '../../data/quotes.js'
 import { tasks } from '../../data/tasks.js'
+
+const baseUrl = import.meta.env.BASE_URL
 
 const isShaking = ref(false)
 const isDropping = ref(false)

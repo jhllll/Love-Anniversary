@@ -65,14 +65,14 @@ let spawnTimer = null
 let fallTimer = null
 
 const heartImages = [
-  '/images/heart/heart-01.svg',
-  '/images/heart/heart-02.svg',
-  '/images/heart/heart-03.svg',
-  '/images/heart/heart-04.svg',
-  '/images/heart/heart-05.svg',
-  '/images/heart/heart-06.svg',
-  '/images/heart/heart-07.svg',
-  '/images/heart/heart-08.svg'
+  import.meta.env.BASE_URL + 'images/heart/heart-01.svg',
+  import.meta.env.BASE_URL + 'images/heart/heart-02.svg',
+  import.meta.env.BASE_URL + 'images/heart/heart-03.svg',
+  import.meta.env.BASE_URL + 'images/heart/heart-04.svg',
+  import.meta.env.BASE_URL + 'images/heart/heart-05.svg',
+  import.meta.env.BASE_URL + 'images/heart/heart-06.svg',
+  import.meta.env.BASE_URL + 'images/heart/heart-07.svg',
+  import.meta.env.BASE_URL + 'images/heart/heart-08.svg'
 ]
 
 function getLevel() {

@@ -57,14 +57,14 @@ let areaWidth = 300
 let areaHeight = 400
 
 const bubbleImages = [
-  '/images/bubble/bubble-01.svg',
-  '/images/bubble/bubble-02.svg',
-  '/images/bubble/bubble-03.svg',
-  '/images/bubble/bubble-04.svg',
-  '/images/bubble/bubble-05.svg',
-  '/images/bubble/bubble-06.svg',
-  '/images/bubble/bubble-07.svg',
-  '/images/bubble/bubble-08.svg'
+  import.meta.env.BASE_URL + 'images/bubble/bubble-01.svg',
+  import.meta.env.BASE_URL + 'images/bubble/bubble-02.svg',
+  import.meta.env.BASE_URL + 'images/bubble/bubble-03.svg',
+  import.meta.env.BASE_URL + 'images/bubble/bubble-04.svg',
+  import.meta.env.BASE_URL + 'images/bubble/bubble-05.svg',
+  import.meta.env.BASE_URL + 'images/bubble/bubble-06.svg',
+  import.meta.env.BASE_URL + 'images/bubble/bubble-07.svg',
+  import.meta.env.BASE_URL + 'images/bubble/bubble-08.svg'
 ]
 
 function particleStyle(n) {

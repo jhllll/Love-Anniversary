@@ -61,14 +61,14 @@ import { ref } from 'vue'
 import { quotes } from '../../data/quotes.js'
 
 const cardImages = [
-  '/images/memory/card-01.svg',
-  '/images/memory/card-02.svg',
-  '/images/memory/card-03.svg',
-  '/images/memory/card-04.svg',
-  '/images/memory/card-05.svg',
-  '/images/memory/card-06.svg',
-  '/images/memory/card-07.svg',
-  '/images/memory/card-08.svg'
+  import.meta.env.BASE_URL + 'images/memory/card-01.svg',
+  import.meta.env.BASE_URL + 'images/memory/card-02.svg',
+  import.meta.env.BASE_URL + 'images/memory/card-03.svg',
+  import.meta.env.BASE_URL + 'images/memory/card-04.svg',
+  import.meta.env.BASE_URL + 'images/memory/card-05.svg',
+  import.meta.env.BASE_URL + 'images/memory/card-06.svg',
+  import.meta.env.BASE_URL + 'images/memory/card-07.svg',
+  import.meta.env.BASE_URL + 'images/memory/card-08.svg'
 ]
 
 const cards = ref([])
