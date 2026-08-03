@@ -6,8 +6,9 @@
 |------|------|
 | 项目名称 | love-app |
 | 文档类型 | 技术设计文档（TDD） |
-| 版本号 | v1.0.0 |
+| 版本号 | v1.1.0 |
 | 创建日期 | 2026-07-31 |
+| 最后更新 | 2026-08-03 |
 | 技术栈 | Vue 3 + Vite + Vue Router 4 |
 
 ---
@@ -25,23 +26,23 @@
 ┌──────────────────▼──────────────────────────┐
 │                   App.vue                    │
 │         <router-view> + <Transition>        │
-└──────┬───────────────────────┬──────────────┘
-       │                       │
-┌──────▼──────┐        ┌──────▼──────┐
-│  Home.vue   │        │ Quotes.vue  │
-│  (首页 /)    │◄──────►│ (/quotes)   │
-│             │ 路由跳转 │             │
-└──────┬──────┘        └──────┬──────┘
-       │                      │
-       │ 依赖                  │ 依赖
-       ▼                      ▼
-┌──────────────┐     ┌──────────────┐
-│  组件层       │     │  组件层       │
-│ HeartParticles│     │ HeartParticles│
-│ Countdown... │     │ QuoteCard    │
-│ ProgressRing │     └──────────────┘
-│ AnnivSetter  │
-└──────┬───────┘
+└──────┬───────────────┬───────────┬──────────┘
+       │               │           │
+┌──────▼──────┐ ┌──────▼──────┐ ┌──▼──────────┐
+│  Home.vue   │ │ Quotes.vue  │ │ Games.vue   │
+│  (首页 /)    │ │ (/quotes)   │ │ (/games)    │
+└──────┬──────┘ └──────┬──────┘ └──┬──────────┘
+       │               │           │
+       │               │     ┌─────┼─────┬─────┐
+       │               │     │     │     │     │
+       ▼               ▼     ▼     ▼     ▼     ▼
+┌──────────────┐  ┌──────────────┬──────────────┐
+│  组件层       │  │  组件层       │  游戏组件层   │
+│ HeartParticles│  │ HeartParticles│ BubbleGame  │
+│ Countdown... │  │ QuoteCard    │ MemoryGame  │
+│ ProgressRing │  └──────────────│ CatchGame   │
+│ AnnivSetter  │                 │ GachaGame   │
+└──────┬───────┘                 └──────────────┘
        │
 ┌──────▼───────┐
 │  composables │
@@ -75,6 +76,7 @@
 |------|------|------|
 | `/` | `views/Home.vue` | 纪念日倒计时首页 |
 | `/quotes` | `views/Quotes.vue` | 每日情话页 |
+| `/games` | `views/Games.vue` | 小游戏页（4 个游戏 Tab） |
 
 ### 2.2 路由配置
 
@@ -123,9 +125,15 @@ App.vue
 │   ├── ProgressRing.vue (进度环)
 │   └── AnniversarySetter.vue (设置弹窗，条件渲染)
 │
-└── Quotes.vue
-    ├── HeartParticles.vue (背景装饰)
-    └── QuoteCard.vue (情话卡片，可复用)
+├── Quotes.vue
+│   ├── HeartParticles.vue (背景装饰)
+│   └── QuoteCard.vue (情话卡片，可复用)
+│
+└── Games.vue
+    ├── BubbleGame.vue (戳泡泡)
+    ├── MemoryGame.vue (翻牌记忆)
+    ├── CatchGame.vue (接爱心)
+    └── GachaGame.vue (扭蛋机)
 ```
 
 ### 3.2 组件详细设计
@@ -181,6 +189,52 @@ App.vue
 | Events | `toggle-favorite` — 切换收藏状态 |
 | 动效 | 进入时 `fadeInUp`，收藏时心形 `heartbeat` 动画 |
 | 装饰 | 大号引号字符 `"` 在顶部作为装饰 |
+
+#### BubbleGame.vue（v1.1.0 新增）
+
+| 项目 | 说明 |
+|------|------|
+| 职责 | 戳泡泡游戏：泡泡从底部升起，玩家点击戳破得分 |
+| Props | 无 |
+| 状态 | `score`、`bubbles[]`、`playing`、`started` |
+| 图片 | 8 种 SVG 泡泡图案（`public/images/bubble/`） |
+| 逻辑 | `setInterval` 生成泡泡 + 移动更新，每 10 分弹出情话提示 |
+| 开始条件 | 点击"开始游戏"按钮后 `started=true` |
+
+#### MemoryGame.vue（v1.1.0 新增）
+
+| 项目 | 说明 |
+|------|------|
+| 职责 | 翻牌记忆匹配游戏，8 对 16 张卡牌 |
+| Props | 无 |
+| 状态 | `cards[]`、`flipped`、`matched`、`previewing`、`previewCount` |
+| 图片 | 8 种恋爱主题 SVG 卡牌图案（`public/images/memory/`） |
+| 预览阶段 | 点击开始 → 3 秒倒计时全部翻开 → 自动合上 |
+| 翻转方式 | `v-show` 切换正面/背面，简化 3D CSS 方案 |
+
+#### CatchGame.vue（v1.1.0 新增）
+
+| 项目 | 说明 |
+|------|------|
+| 职责 | 移动篮子接住下落的爱心，5 条命 |
+| Props | 无 |
+| 状态 | `lives`、`score`、`level`、`hearts[]`、`basketX` |
+| 图片 | 8 种粉色系 SVG 爱心（`public/images/heart/`） |
+| 控制 | `touchmove` / `mousemove` 控制篮子 X 轴位置 |
+| 难度递进 | 等级随分数自动提升（Lv = floor(score/5)+1），生成间隔 1100ms→450ms，速度系数 0.8x→2.2x+ |
+| 动态调度 | `setTimeout` 链替代 `setInterval`，根据当前等级动态调整生成间隔 |
+
+#### GachaGame.vue（v1.1.0 新增）
+
+| 项目 | 说明 |
+|------|------|
+| 职责 | 扭蛋机：随机获得情话或恋爱小任务 |
+| Props | 无 |
+| 状态 | `isShaking`、`isDropping`、`result`、`history[]` |
+| 图片 | 3 个 SVG（旋钮/胶囊/出口，`public/images/gacha/`） |
+| 动画 | CSS `@keyframes shake`（抖动）+ `@keyframes capsule-drop`（掉落） |
+| 数据源 | 情话库（`data/quotes.js`）+ 任务库（`data/tasks.js`） |
+| 概率 | 50% 情话 / 50% 任务 |
 
 ---
 
@@ -408,8 +462,18 @@ export default defineConfig({
 | `src/components/QuoteCard.vue` | ~85 | 情话卡片 |
 | `src/views/Home.vue` | ~155 | 首页，组装所有组件 |
 | `src/views/Quotes.vue` | ~140 | 情话页，每日情话 + 收藏 |
+| `src/views/Games.vue` | ~80 | 游戏页，4 个游戏 Tab 切换 |
+| `src/components/games/BubbleGame.vue` | ~180 | 戳泡泡游戏 |
+| `src/components/games/MemoryGame.vue` | ~200 | 翻牌记忆游戏 |
+| `src/components/games/CatchGame.vue` | ~195 | 接爱心游戏 |
+| `src/components/games/GachaGame.vue` | ~100 | 扭蛋机游戏 |
+| `src/data/tasks.js` | ~20 | 恋爱小任务数据 |
+| `public/images/bubble/` | 8 个 SVG | 泡泡图案 |
+| `public/images/memory/` | 8 个 SVG | 卡牌图案 |
+| `public/images/heart/` | 8 个 SVG | 爱心图案 |
+| `public/images/gacha/` | 3 个 SVG | 扭蛋机图案 |
 
-**总计：17 个源文件，约 1000+ 行代码。**
+**总计：23 个源文件 + 27 个 SVG 图片资源。**
 
 ---
 
@@ -418,3 +482,4 @@ export default defineConfig({
 | 版本 | 日期 | 变更内容 | 作者 |
 |------|------|----------|------|
 | v1.0.0 | 2026-07-31 | 初始版本，完整技术设计 | - |
+| v1.1.0 | 2026-08-03 | 新增4个游戏组件、SVG图片资源系统、游戏难度递进算法、预览阶段设计 | - |
