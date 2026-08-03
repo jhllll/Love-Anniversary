@@ -17,23 +17,27 @@
       </div>
 
       <div class="game-panel glass-card">
-        <BubbleGame v-if="activeTab === 'bubble'" />
-        <MemoryGame v-if="activeTab === 'memory'" />
-        <CatchGame v-if="activeTab === 'catch'" />
-        <GachaGame v-if="activeTab === 'gacha'" />
+        <KeepAlive :max="4">
+          <component :is="activeComponent" />
+        </KeepAlive>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import BubbleGame from '../components/games/BubbleGame.vue'
 import MemoryGame from '../components/games/MemoryGame.vue'
 import CatchGame from '../components/games/CatchGame.vue'
 import GachaGame from '../components/games/GachaGame.vue'
 
-const activeTab = ref('bubble')
+const gameComponents = {
+  bubble: BubbleGame,
+  memory: MemoryGame,
+  catch: CatchGame,
+  gacha: GachaGame
+}
 
 const tabs = [
   { key: 'bubble', icon: '🫧', label: '戳泡泡' },
@@ -41,6 +45,9 @@ const tabs = [
   { key: 'catch', icon: '🧺', label: '接爱心' },
   { key: 'gacha', icon: '🥚', label: '扭蛋机' }
 ]
+
+const activeTab = ref('bubble')
+const activeComponent = computed(() => gameComponents[activeTab.value])
 </script>
 
 <style scoped>

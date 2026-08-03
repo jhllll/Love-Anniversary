@@ -1,6 +1,6 @@
 <template>
   <div class="countdown-display">
-    <div class="days-number number-font" ref="daysRef">{{ displayDays }}</div>
+    <div class="days-number number-font">{{ displayDays }}</div>
     <div class="days-label">我们在一起的第</div>
     <div class="days-label-sub">天</div>
 
@@ -22,7 +22,7 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 
 const props = defineProps({
   days: { type: Number, default: 0 },
@@ -31,6 +31,7 @@ const props = defineProps({
 
 const displayDays = ref(0)
 const displayDuration = ref({ years: 0, months: 0, days: 0 })
+const rafIds = new Set()
 
 function animateValue(key, from, to, duration = 1200) {
   const start = performance.now()
@@ -47,10 +48,10 @@ function animateValue(key, from, to, duration = 1200) {
       }
     }
     if (progress < 1) {
-      requestAnimationFrame(tick)
+      rafIds.add(requestAnimationFrame(tick))
     }
   }
-  requestAnimationFrame(tick)
+  rafIds.add(requestAnimationFrame(tick))
 }
 
 watch(() => props.days, (val) => {
@@ -62,6 +63,13 @@ watch(() => props.duration, (val) => {
   animateValue('months', 0, val.months, 800)
   animateValue('days', 0, val.days, 600)
 }, { immediate: true, deep: true })
+
+onUnmounted(() => {
+  for (const id of rafIds) {
+    cancelAnimationFrame(id)
+  }
+  rafIds.clear()
+})
 </script>
 
 <style scoped>

@@ -72,17 +72,6 @@ defineEmits(['toggle-favorite'])
   animation: heartbeat 0.6s ease;
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @keyframes heartbeat {
   0% { transform: scale(1); }
   25% { transform: scale(1.3); }

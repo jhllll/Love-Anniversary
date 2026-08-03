@@ -16,8 +16,8 @@
         <h2 class="section-title">今日推荐</h2>
         <QuoteCard
           :text="currentQuote"
-          :favorited="isFavorited(currentQuoteIndex)"
-          @toggle-favorite="toggleFavorite(currentQuoteIndex)"
+          :favorited="isFavorited(currentQuoteText)"
+          @toggle-favorite="toggleFavorite(currentQuoteText)"
         />
         <div class="section-actions">
           <button class="btn btn--secondary" @click="refreshQuote">
@@ -31,13 +31,13 @@
         <h2 class="section-title">我的收藏 ({{ favoriteQuotes.length }})</h2>
         <div
           v-for="fav in favoriteQuotes"
-          :key="fav.index"
+          :key="fav.text"
           class="fav-item glass-card"
         >
           <p class="fav-text">{{ fav.text }}</p>
           <button
             class="fav-remove"
-            @click="toggleFavorite(fav.index)"
+            @click="toggleFavorite(fav.text)"
             aria-label="取消收藏"
           >❤</button>
         </div>
@@ -57,7 +57,6 @@ import QuoteCard from '../components/QuoteCard.vue'
 import { useQuotes } from '../composables/useQuotes.js'
 
 const {
-  todayIndex,
   todayQuote,
   getRandomQuote,
   isFavorited,
@@ -72,8 +71,8 @@ const currentQuote = computed(() => {
   return useRandom.value ? randomQuote.value : todayQuote.value
 })
 
-const currentQuoteIndex = computed(() => {
-  return useRandom.value ? -1 : todayIndex.value
+const currentQuoteText = computed(() => {
+  return currentQuote.value
 })
 
 function refreshQuote() {
@@ -171,16 +170,5 @@ function refreshQuote() {
   font-size: 13px;
   color: var(--white);
   opacity: 0.7;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 </style>

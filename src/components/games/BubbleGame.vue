@@ -1,12 +1,13 @@
 <template>
   <div class="bubble-game">
     <!-- 开始遮罩 -->
-    <div v-if="!started" class="start-overlay glass-card">
-      <p class="start-emoji">🫧</p>
-      <p class="start-title">戳泡泡</p>
-      <p class="start-desc">戳破爱心泡泡，每10分弹出情话</p>
-      <button class="btn" @click="startGame">开始游戏</button>
-    </div>
+    <GameStartOverlay
+      v-if="!started"
+      emoji="🫧"
+      title="戳泡泡"
+      description="戳破爱心泡泡，每10分弹出情话"
+      @start="startGame"
+    />
 
     <div class="game-header">
       <span class="score">💖 {{ score }} 分</span>
@@ -41,8 +42,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, onDeactivated, nextTick } from 'vue'
 import { quotes } from '../../data/quotes.js'
+import GameStartOverlay from './GameStartOverlay.vue'
 
 const score = ref(0)
 const bubbles = ref([])
@@ -55,6 +57,7 @@ let spawnTimer = null
 let moveTimer = null
 let areaWidth = 300
 let areaHeight = 400
+const timeouts = new Set()
 
 const bubbleImages = [
   import.meta.env.BASE_URL + 'images/bubble/bubble-01.svg',
@@ -96,16 +99,16 @@ function popBubble(bubble) {
   bubble.popping = true
   score.value++
 
-  setTimeout(() => {
+  timeouts.add(setTimeout(() => {
     const idx = bubbles.value.indexOf(bubble)
     if (idx > -1) bubbles.value.splice(idx, 1)
-  }, 400)
+  }, 400))
 
   if (score.value % 10 === 0) {
     const randomQuote = quotes[Math.floor(Math.random() * quotes.length)]
     toastMsg.value = randomQuote
     showToast.value = true
-    setTimeout(() => { showToast.value = false }, 2500)
+    timeouts.add(setTimeout(() => { showToast.value = false }, 2500))
   }
 }
 
@@ -135,6 +138,17 @@ function startGame() {
   moveTimer = setInterval(updateBubbles, 16)
 }
 
+function stopGame() {
+  clearInterval(spawnTimer)
+  clearInterval(moveTimer)
+  for (const id of timeouts) {
+    clearTimeout(id)
+  }
+  timeouts.clear()
+  started.value = false
+  bubbles.value = []
+}
+
 onMounted(async () => {
   await nextTick()
   resize()
@@ -142,9 +156,12 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  clearInterval(spawnTimer)
-  clearInterval(moveTimer)
+  stopGame()
   window.removeEventListener('resize', resize)
+})
+
+onDeactivated(() => {
+  stopGame()
 })
 </script>
 
@@ -253,39 +270,5 @@ onUnmounted(() => {
   z-index: 100;
   animation: toast-in 0.4s ease-out;
   max-width: 260px;
-}
-
-@keyframes toast-in {
-  from { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
-  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-}
-
-.start-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  z-index: 50;
-  text-align: center;
-  padding: 24px;
-}
-
-.start-emoji {
-  font-size: 48px;
-}
-
-.start-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--pink-deep);
-}
-
-.start-desc {
-  font-size: 13px;
-  color: var(--text-light);
-  margin-bottom: 8px;
 }
 </style>

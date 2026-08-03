@@ -1,12 +1,13 @@
 <template>
   <div class="memory-game">
     <!-- 开始遮罩 -->
-    <div v-if="!started" class="start-overlay glass-card">
-      <p class="start-emoji">🃏</p>
-      <p class="start-title">翻牌记忆</p>
-      <p class="start-desc">记住每张卡片的位置，找出所有配对</p>
-      <button class="btn" @click="startGame">开始游戏</button>
-    </div>
+    <GameStartOverlay
+      v-if="!started"
+      emoji="🃏"
+      title="翻牌记忆"
+      description="记住每张卡片的位置，找出所有配对"
+      @start="startGame"
+    />
 
     <!-- 预览倒计时 -->
     <div v-if="previewing" class="preview-overlay">
@@ -57,8 +58,9 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onDeactivated } from 'vue'
 import { quotes } from '../../data/quotes.js'
+import GameStartOverlay from './GameStartOverlay.vue'
 
 const cardImages = [
   import.meta.env.BASE_URL + 'images/memory/card-01.svg',
@@ -182,6 +184,16 @@ function startGame() {
   initCards()
   beginPreview()
 }
+
+onDeactivated(() => {
+  clearInterval(previewTimer)
+  previewTimer = null
+  previewing.value = false
+  lockBoard.value = false
+  started.value = false
+  firstCard = null
+  secondCard = null
+})
 </script>
 
 <style scoped>
@@ -314,39 +326,5 @@ function startGame() {
   font-size: 14px;
   color: var(--pink-deep);
   font-weight: 500;
-}
-
-@keyframes toast-in {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.start-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  z-index: 50;
-  text-align: center;
-  padding: 24px;
-}
-
-.start-emoji {
-  font-size: 48px;
-}
-
-.start-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--pink-deep);
-}
-
-.start-desc {
-  font-size: 13px;
-  color: var(--text-light);
-  margin-bottom: 8px;
 }
 </style>

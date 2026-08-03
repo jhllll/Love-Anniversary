@@ -25,7 +25,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 
 const props = defineProps({
   visible: { type: Boolean, default: false },
@@ -37,6 +37,10 @@ const emit = defineEmits(['confirm', 'close'])
 const today = new Date()
 const maxDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
 const selectedDate = ref(props.currentDate || '')
+
+watch(() => props.currentDate, (val) => {
+  selectedDate.value = val || ''
+})
 
 function handleConfirm() {
   if (selectedDate.value) {

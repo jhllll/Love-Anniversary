@@ -1,12 +1,13 @@
 <template>
   <div class="gacha-game">
     <!-- 开始遮罩 -->
-    <div v-if="!started" class="start-overlay glass-card">
-      <p class="start-emoji">🥚</p>
-      <p class="start-title">扭蛋机</p>
-      <p class="start-desc">扭一扭，随机获得情话或恋爱任务</p>
-      <button class="btn" @click="started = true">开始游戏</button>
-    </div>
+    <GameStartOverlay
+      v-if="!started"
+      emoji="🥚"
+      title="扭蛋机"
+      description="扭一扭，随机获得情话或恋爱任务"
+      @start="started = true"
+    />
 
     <div class="machine">
       <div class="machine-body glass-card" :class="{ shaking: isShaking }">
@@ -49,9 +50,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onUnmounted, onDeactivated } from 'vue'
 import { quotes } from '../../data/quotes.js'
 import { tasks } from '../../data/tasks.js'
+import GameStartOverlay from './GameStartOverlay.vue'
 
 const baseUrl = import.meta.env.BASE_URL
 
@@ -64,6 +66,7 @@ const resultText = ref('')
 const isTask = ref(false)
 const history = ref([])
 const started = ref(false)
+const timers = new Set()
 
 function gacha() {
   if (isShaking.value) return
@@ -73,11 +76,11 @@ function gacha() {
 
   dropIndex.value = 1 + Math.floor(Math.random() * 8)
 
-  setTimeout(() => {
+  timers.add(setTimeout(() => {
     isDropping.value = true
-  }, 400)
+  }, 400))
 
-  setTimeout(() => {
+  timers.add(setTimeout(() => {
     isShaking.value = false
     isDropping.value = false
 
@@ -94,10 +97,31 @@ function gacha() {
       type: isTask.value ? 'task' : 'quote',
       text: resultText.value
     })
+    if (history.value.length > 5) {
+      history.value = history.value.slice(-5)
+    }
 
     showResult.value = true
-  }, 1200)
+  }, 1200))
 }
+
+onUnmounted(() => {
+  for (const id of timers) {
+    clearTimeout(id)
+  }
+  timers.clear()
+})
+
+onDeactivated(() => {
+  for (const id of timers) {
+    clearTimeout(id)
+  }
+  timers.clear()
+  isShaking.value = false
+  isDropping.value = false
+  started.value = false
+  showResult.value = false
+})
 </script>
 
 <style scoped>
@@ -262,39 +286,5 @@ function gacha() {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-@keyframes toast-in {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.start-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  z-index: 50;
-  text-align: center;
-  padding: 24px;
-}
-
-.start-emoji {
-  font-size: 48px;
-}
-
-.start-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--pink-deep);
-}
-
-.start-desc {
-  font-size: 13px;
-  color: var(--text-light);
-  margin-bottom: 8px;
 }
 </style>

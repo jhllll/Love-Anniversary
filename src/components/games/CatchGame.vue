@@ -1,12 +1,13 @@
 <template>
   <div class="catch-game">
     <!-- 开始遮罩 -->
-    <div v-if="!started" class="start-overlay glass-card">
-      <p class="start-emoji">🧺</p>
-      <p class="start-title">接爱心</p>
-      <p class="start-desc">移动篮子接住下落的爱心，有5条命</p>
-      <button class="btn" @click="beginGame">开始游戏</button>
-    </div>
+    <GameStartOverlay
+      v-if="!started"
+      emoji="🧺"
+      title="接爱心"
+      description="移动篮子接住下落的爱心，有5条命"
+      @start="beginGame"
+    />
 
     <div class="game-header">
       <span class="lives">❤️ x {{ lives }}</span>
@@ -48,7 +49,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, onDeactivated, nextTick } from 'vue'
+import GameStartOverlay from './GameStartOverlay.vue'
 
 const lives = ref(5)
 const score = ref(0)
@@ -150,6 +152,12 @@ function stopGame() {
   clearInterval(fallTimer)
 }
 
+function resetGame() {
+  stopGame()
+  started.value = false
+  hearts.value = []
+}
+
 function onMove(e) {
   if (!playing.value) return
   const clientX = e.touches ? e.touches[0].clientX : e.clientX
@@ -188,9 +196,12 @@ onMounted(async () => {
 })
 
 onUnmounted(() => {
-  clearTimeout(spawnTimer)
-  clearInterval(fallTimer)
+  stopGame()
   window.removeEventListener('resize', resize)
+})
+
+onDeactivated(() => {
+  resetGame()
 })
 </script>
 
@@ -280,39 +291,5 @@ onUnmounted(() => {
   font-weight: 600;
   margin: 8px 0 16px;
   color: var(--pink-deep);
-}
-
-@keyframes toast-in {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-.start-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  z-index: 50;
-  text-align: center;
-  padding: 24px;
-}
-
-.start-emoji {
-  font-size: 48px;
-}
-
-.start-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--pink-deep);
-}
-
-.start-desc {
-  font-size: 13px;
-  color: var(--text-light);
-  margin-bottom: 8px;
 }
 </style>

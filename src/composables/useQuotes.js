@@ -23,14 +23,23 @@ export function useQuotes() {
 
   function loadFavorites() {
     try {
-      return JSON.parse(localStorage.getItem(FAVORITES_KEY) || '[]')
+      const raw = localStorage.getItem(FAVORITES_KEY)
+      if (!raw) return []
+      const parsed = JSON.parse(raw)
+      if (parsed.length > 0 && typeof parsed[0] === 'number') {
+        // 旧格式：索引数组 → 迁移为文本数组
+        const migrated = parsed.map(i => quotes[i]).filter(Boolean)
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify(migrated))
+        return migrated
+      }
+      return parsed
     } catch {
       return []
     }
   }
 
-  function saveFavorites() {
-    localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites.value))
+  function saveFavorites(arr) {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(arr))
   }
 
   const todayIndex = computed(() => {
@@ -50,22 +59,22 @@ export function useQuotes() {
     return quotes[idx]
   }
 
-  function isFavorited(index) {
-    return favorites.value.includes(index)
+  function isFavorited(text) {
+    return favorites.value.includes(text)
   }
 
-  function toggleFavorite(index) {
-    const pos = favorites.value.indexOf(index)
+  function toggleFavorite(text) {
+    const pos = favorites.value.indexOf(text)
     if (pos > -1) {
       favorites.value.splice(pos, 1)
     } else {
-      favorites.value.push(index)
+      favorites.value.push(text)
     }
-    saveFavorites()
+    saveFavorites(favorites.value)
   }
 
   const favoriteQuotes = computed(() => {
-    return favorites.value.map(idx => ({ index: idx, text: quotes[idx] }))
+    return favorites.value.map(text => ({ text }))
   })
 
   return {

@@ -1,16 +1,12 @@
 <script setup>
-import { computed } from 'vue'
-
-const particles = computed(() => {
-  return Array.from({ length: 15 }, (_, i) => ({
-    id: i,
-    left: `${Math.random() * 100}%`,
-    animationDelay: `${Math.random() * 10}s`,
-    animationDuration: `${8 + Math.random() * 12}s`,
-    fontSize: `${10 + Math.random() * 18}px`,
-    opacity: 0.08 + Math.random() * 0.12
-  }))
-})
+const particles = Array.from({ length: 15 }, (_, i) => ({
+  id: i,
+  left: `${Math.random() * 100}%`,
+  animationDelay: `${Math.random() * 10}s`,
+  animationDuration: `${8 + Math.random() * 12}s`,
+  fontSize: `${10 + Math.random() * 18}px`,
+  opacity: 0.08 + Math.random() * 0.12
+}))
 </script>
 
 <template>
@@ -55,10 +51,10 @@ const particles = computed(() => {
     opacity: 0;
   }
   5% {
-    opacity: var(--opacity, 0.1);
+    opacity: 0.1;
   }
   90% {
-    opacity: var(--opacity, 0.1);
+    opacity: 0.1;
   }
   100% {
     transform: translateY(100vh) rotate(360deg);
